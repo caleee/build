@@ -262,7 +262,7 @@ jobs:
         run: mkdir -p /home/runner/work/build/build/custom/userpatches
       
       - name: Build Armbian with armbian/build action
-      - uses: armbian/build@v23.11.2
+        uses: armbian/build@v23.11.2
         with:
           armbian_token:              "${{secrets.ACT_GITHUB_TOKEN}}"
           armbian_target:             "${{inputs.armbian_target}}"
