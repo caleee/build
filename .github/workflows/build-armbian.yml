@@ -261,6 +261,9 @@ jobs:
       - name: Create userpatches directory
         run: mkdir -p /home/runner/work/build/build/custom/userpatches
       
+      - name: List contents in custom directory
+        run: ls -la /home/runner/work/build/build/custom/
+      
       - name: Build Armbian with armbian/build action
         uses: armbian/build@v23.11.2
         with:
