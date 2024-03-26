@@ -66,9 +66,11 @@ function prepare_kernel_packaging_debs() {
 	# Due to we call `make install` twice, we will get some `.old` files
 	run_host_command_logged rm -rf "${tmp_kernel_install_dirs[INSTALL_PATH]}/*.old" || true
 
-	# package the linux-image (image, modules, dtbs (if present))
-	display_alert "Packaging linux-image" "${LINUXFAMILY} ${LINUXCONFIG}" "info"
-	create_kernel_deb "linux-image-${BRANCH}-${LINUXFAMILY}" "${debs_target_dir}" kernel_package_callback_linux_image "linux-image"
+	if [[ "${KERNEL_DTB_ONLY}" != "yes" ]]; then
+		# package the linux-image (image, modules, dtbs (if present))
+		display_alert "Packaging linux-image" "${LINUXFAMILY} ${LINUXCONFIG}" "info"
+		create_kernel_deb "linux-image-${BRANCH}-${LINUXFAMILY}" "${debs_target_dir}" kernel_package_callback_linux_image "linux-image"
+	fi
 
 	# if dtbs present, package those too separately, for u-boot usage.
 	if [[ -d "${tmp_kernel_install_dirs[INSTALL_DTBS_PATH]}" ]]; then
@@ -76,12 +78,17 @@ function prepare_kernel_packaging_debs() {
 		create_kernel_deb "linux-dtb-${BRANCH}-${LINUXFAMILY}" "${debs_target_dir}" kernel_package_callback_linux_dtb "linux-dtb"
 	fi
 
-	if [[ "${KERNEL_HAS_WORKING_HEADERS}" == "yes" ]]; then
-		display_alert "Packaging linux-headers" "${LINUXFAMILY} ${LINUXCONFIG}" "info"
-		create_kernel_deb "linux-headers-${BRANCH}-${LINUXFAMILY}" "${debs_target_dir}" kernel_package_callback_linux_headers "linux-headers"
-	else
-		display_alert "Skipping linux-headers package" "for ${KERNEL_MAJOR_MINOR} kernel version" "info"
+	if [[ "${KERNEL_DTB_ONLY}" != "yes" ]]; then
+		if [[ "${KERNEL_HAS_WORKING_HEADERS}" == "yes" ]]; then
+			display_alert "Packaging linux-headers" "${LINUXFAMILY} ${LINUXCONFIG}" "info"
+			create_kernel_deb "linux-headers-${BRANCH}-${LINUXFAMILY}" "${debs_target_dir}" kernel_package_callback_linux_headers "linux-headers"
+		else
+			display_alert "Skipping linux-headers package" "for ${KERNEL_MAJOR_MINOR} kernel version" "info"
+		fi
 	fi
+
+	display_alert "Packaging linux-libc-dev" "${LINUXFAMILY} ${LINUXCONFIG}" "info"
+	create_kernel_deb "linux-libc-dev-${BRANCH}-${LINUXFAMILY}" "${debs_target_dir}" kernel_package_callback_linux_libc_dev "linux-libc-dev"
 }
 
 function create_kernel_deb() {
@@ -526,4 +533,30 @@ function kernel_package_callback_linux_headers() {
 			echo "Done compiling kernel-headers tools (${kernel_version_family})."
 		EOT_POSTINST_FINISH
 	)
+}
+
+
+function kernel_package_callback_linux_libc_dev() {
+	display_alert "linux-libc-dev packaging" "${package_directory}" "debug"
+
+	mkdir -p "${package_directory}/usr"
+	run_host_command_logged cp -rp "${tmp_kernel_install_dirs[INSTALL_HDR_PATH]}/include" "${package_directory}/usr"
+	HOST_ARCH=$(dpkg-architecture -a${ARCH} -q"DEB_HOST_MULTIARCH")
+	run_host_command_logged mkdir "${package_directory}/usr/include/${HOST_ARCH}"
+	run_host_command_logged mv "${package_directory}/usr/include/asm" "${package_directory}/usr/include/${HOST_ARCH}"
+
+    # Generate a control file
+	cat <<- CONTROL_FILE > "${package_DEBIAN_dir}/control"
+		Version: ${artifact_version}
+		Maintainer: ${MAINTAINER} <${MAINTAINERMAIL}>
+		Package: ${package_name}
+		Section: devel
+		Priority: optional
+		Provides: linux-libc-dev
+		Architecture: ${ARCH}
+		Description: Armbian Linux support headers for userspace development
+		 This package provides userspaces headers from the Linux kernel.  These headers
+		 are used by the installed headers for GNU glibc and other system libraries.
+		Multi-Arch: same
+	CONTROL_FILE
 }

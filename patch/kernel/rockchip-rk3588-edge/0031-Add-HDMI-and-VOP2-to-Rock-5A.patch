@@ -1,14 +1,14 @@
-From 77b6e6e4d1d1791e2dcfb7014601a4d727a2bce9 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Muhammed Efe Cetin <efectn@protonmail.com>
 Date: Tue, 27 Feb 2024 16:04:42 +0300
-Subject: [PATCH] Add HDMI and VOP2 to Rock 5A
+Subject: Add HDMI and VOP2 to Rock 5A
 
 ---
- .../boot/dts/rockchip/rk3588s-rock-5a.dts     | 48 +++++++++++++++++++
- 1 file changed, 48 insertions(+)
+ arch/arm64/boot/dts/rockchip/rk3588s-rock-5a.dts | 30 ++++++++++
+ 1 file changed, 30 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/rockchip/rk3588s-rock-5a.dts b/arch/arm64/boot/dts/rockchip/rk3588s-rock-5a.dts
-index a9ad9d2d54ae..e62eacbd54f6 100644
+index a9ad9d2d54ae..46cb19e86cc1 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3588s-rock-5a.dts
 +++ b/arch/arm64/boot/dts/rockchip/rk3588s-rock-5a.dts
 @@ -5,6 +5,7 @@
@@ -19,31 +19,12 @@ index a9ad9d2d54ae..e62eacbd54f6 100644
  #include "rk3588s.dtsi"
  
  / {
-@@ -56,6 +57,17 @@ fan: pwm-fan {
- 		#cooling-cells = <2>;
- 	};
- 
-+	hdmi-con {
-+		compatible = "hdmi-connector";
-+		type = "a";
-+
-+		port {
-+			hdmi_con_in: endpoint {
-+				remote-endpoint = <&hdmi0_out_con>;
-+			};
-+		};
-+	};
-+
- 	vcc12v_dcin: vcc12v-dcin-regulator {
- 		compatible = "regulator-fixed";
- 		regulator-name = "vcc12v_dcin";
-@@ -768,3 +780,39 @@ &usb_host1_ohci {
+@@ -768,3 +769,32 @@ &usb_host1_ohci {
  &usb_host2_xhci {
  	status = "okay";
  };
 +
 +&hdmi0 {
-+	enable-gpios = <&gpio4 RK_PB6 GPIO_ACTIVE_HIGH>;
 +	status = "okay";
 +};
 +
@@ -61,12 +42,6 @@ index a9ad9d2d54ae..e62eacbd54f6 100644
 +	};
 +};
 +
-+&hdmi0_out {
-+	hdmi0_out_con: endpoint {
-+		remote-endpoint = <&hdmi_con_in>;
-+	};
-+};
-+
 +&vop {
 +	status = "okay";
 +};
@@ -78,5 +53,5 @@ index a9ad9d2d54ae..e62eacbd54f6 100644
 +	};
 +};
 -- 
-2.43.1
+Armbian
 
